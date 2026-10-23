@@ -1,0 +1,26 @@
+# Operating-system files
+.DS_Store
+Thumbs.db
+
+# STM32CubeIDE workspace state and generated builds
+.metadata/
+firmware/**/Debug/
+firmware/**/Release/
+firmware/**/build/
+firmware/**/cmake-build-*/
+firmware/**/*.o
+firmware/**/*.d
+firmware/**/*.elf
+firmware/**/*.map
+firmware/**/*.su
+
+# MATLAB autosave and local workspace files
+matlab/**/*.asv
+matlab/**/*~
+matlab/**/MATLABWorkspace.mat
+matlab/**/matlab_crash_dump.*
+
+# Local environment configuration
+.env
+.env.*
+!.env.example
