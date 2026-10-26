@@ -18,9 +18,9 @@ Select **Demo (offline)**, click **Connect**, **Apply settings**, then **Start n
 
 - **Firmware:** STM32, initially targeting NUCLEO-G474RE / STM32G474RE.
 - **PC interface:** A native, programmatic MATLAB GUI (`.m` source) using MATLAB UI components.
-- **Communication:** USB serial with a [draft command protocol](docs/serial-protocol.md).
+- **Communication:** USB serial with a [documented command protocol](docs/serial-protocol.md).
 
-The MATLAB app sends settings and test commands. Firmware will configure peripherals, acquire measurements, and return data and status. Precise acquisition and signal timing belong in embedded hardware.
+The MATLAB app sends settings and test commands. The first firmware implements command handling and returns simulated data over the board's ST-LINK virtual COM port. Physical measurement/output drivers are the next integration step. Precise acquisition and signal timing belong in embedded hardware.
 
 ## Repository layout
 
@@ -33,8 +33,10 @@ The MATLAB app sends settings and test commands. Firmware will configure periphe
 
 ## Current status
 
-The first MATLAB GUI is implemented with simulated data and a serial transport for the draft protocol. It has passed static MATLAB syntax/lint checks, but has not been run in MATLAB or tested with a board. Runnable MATLAB tests are included. Matching STM32 firmware and hardware designs have not been added yet.
+The MATLAB GUI and matching NUCLEO-G474RE communication firmware are implemented. A compiled `.bin`/`.hex`, STM32Cube HAL source project, and [flashing/connection guide](firmware/README.md) are included. The MCU sends explicitly labeled simulated measurements; ADC, supplies, references, and clock output still need hardware drivers.
+
+Validation completed: ARM firmware compile/link, native protocol tests with address/undefined-behavior sanitizers, and MATLAB static syntax/lint checks. The board has not been flashed here and MATLAB/physical serial operation has not been tested. Runnable MATLAB tests and a board-link test are included.
 
 ## Next integration milestone
 
-Create the STM32 project, implement and validate the serial protocol, then demonstrate one measured command-and-response path from the GUI through the MCU to the hardware. Extend to the remaining subsystems after that path works.
+Flash the board, verify the existing serial link with the GUI, then replace one simulated channel with an actual ADC measurement. Extend to the remaining subsystems after that measured command-and-response path works.

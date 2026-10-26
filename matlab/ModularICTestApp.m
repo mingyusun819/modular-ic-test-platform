@@ -29,6 +29,7 @@ classdef ModularICTestApp < handle
         SampleCount = 0
         Data = zeros(50000, 5)
         CaptureMode = 'Demo (simulated)'
+        DeviceSource = 'unverified source'
         BadLines = 0
         LogLines = {}
     end
@@ -309,9 +310,15 @@ classdef ModularICTestApp < handle
                 app.Dirty = true;
                 app.BadLines = 0;
                 if ~app.Demo
+                    app.DeviceSource = 'unverified source';
+                    app.UI.Source.Text = 'STM32 serial | awaiting device source';
                     configureCallback(app.Serial, 'terminator', @(src, ~) app.receive(src));
                 end
                 start(app.UpdateTimer);
+                if ~app.Demo
+                    % Recover a board left streaming by a prior host session.
+                    app.sendRequest('STOP', '', struct());
+                end
                 app.log('Connected. Apply settings before starting a capture.');
                 app.UI.Applied.Text = 'Settings not applied';
                 app.updateControls();
@@ -435,7 +442,7 @@ classdef ModularICTestApp < handle
 
         function beginRun(app)
             app.clearCapture();
-            app.CaptureMode = 'STM32 serial';
+            app.CaptureMode = ['STM32 serial (' app.DeviceSource ')'];
             if app.Demo
                 app.CaptureMode = 'Demo (simulated)';
             end
@@ -559,13 +566,26 @@ classdef ModularICTestApp < handle
                     case {'ACK', 'ERR'}
                         app.handleReply(message);
                     case 'STATUS'
-                        app.log(['RX ' message.Text]);
+                        app.handleStatus(message.Text);
                     otherwise
                         app.badLine('Discarded malformed or unknown serial message.');
                 end
             catch err
                 app.disconnect();
                 app.showError(['Serial read failed: ' err.message]);
+            end
+        end
+
+        function handleStatus(app, text)
+            app.log(['RX ' text]);
+            if strcmp(text, 'SOURCE,SIMULATED')
+                app.DeviceSource = 'simulated';
+                app.UI.Source.Text = 'STM32 serial | simulated measurements';
+            elseif strcmp(text, 'SOURCE,HARDWARE')
+                app.DeviceSource = 'hardware-reported';
+                app.UI.Source.Text = 'STM32 serial | hardware-reported measurements';
+            elseif strcmp(text, 'STOPPED,CAPTURE_LIMIT') && app.Running
+                app.finishRun();
             end
         end
 
@@ -687,6 +707,8 @@ classdef ModularICTestApp < handle
             mode = 'stm32';
             if strcmp(app.CaptureMode, 'Demo (simulated)')
                 mode = 'demo';
+            elseif strcmp(app.CaptureMode, 'STM32 serial (simulated)')
+                mode = 'stm32_simulated';
             end
             name = sprintf('ic_capture_%s_%s.csv', mode, datestr(now, 'yyyymmdd_HHMMSS'));
             [file, folder] = uiputfile('*.csv', 'Export capture', name);

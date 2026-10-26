@@ -31,6 +31,13 @@ verifyEqual(testCase, message.Text, 'RANGE,unsupported clock');
 message = ModularICTestApp.decodeLine('STATUS,READY');
 verifyEqual(testCase, message.Kind, 'STATUS');
 verifyEqual(testCase, message.Text, 'READY');
+message = ModularICTestApp.decodeLine('STATUS,SOURCE,SIMULATED');
+verifyEqual(testCase, message.Kind, 'STATUS');
+verifyEqual(testCase, message.Text, 'SOURCE,SIMULATED');
+message = ModularICTestApp.decodeLine('ERR,12,RANGE_OR_NUMBER');
+verifyEqual(testCase, message.Kind, 'ERR');
+verifyEqual(testCase, message.ID, 12);
+verifyEqual(testCase, message.Text, 'RANGE_OR_NUMBER');
 end
 
 function testInvalidReplyIDs(testCase)

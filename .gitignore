@@ -24,3 +24,7 @@ matlab/**/matlab_crash_dump.*
 .env
 .env.*
 !.env.example
+
+# PlatformIO cache and temporary build products
+firmware/.pio/
+
