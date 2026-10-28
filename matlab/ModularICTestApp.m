@@ -30,6 +30,7 @@ classdef ModularICTestApp < handle
         Data = zeros(50000, 5)
         CaptureMode = 'Demo (simulated)'
         DeviceSource = 'unverified source'
+        SupplyClock = []
         BadLines = 0
         LogLines = {}
     end
@@ -113,7 +114,12 @@ classdef ModularICTestApp < handle
             app.UI.Status = uilabel(header, 'Text', 'DISCONNECTED', ...
                 'FontWeight', 'bold', 'FontColor', [1 0.78 0.38], ...
                 'HorizontalAlignment', 'right');
-            app.place(app.UI.Status, [1 2], 2);
+            app.place(app.UI.Status, 1, 2);
+            app.UI.Supply = uilabel(header, 'Text', 'MCU VDDA: --', ...
+                'FontColor', [0.72 0.81 0.90], 'FontSize', 12, ...
+                'HorizontalAlignment', 'right', ...
+                'Tooltip', 'MCU analog supply estimated using factory-calibrated VREFINT. Other plotted channels remain simulated.');
+            app.place(app.UI.Supply, 2, 2);
 
             sidebar = uigridlayout(root, [3 1], ...
                 'RowHeight', {'1x', 82, 40}, 'Padding', [0 0 0 0], ...
@@ -350,6 +356,8 @@ classdef ModularICTestApp < handle
         end
 
         function disconnect(app)
+            app.SupplyClock = [];
+            app.UI.Supply.Text = 'MCU VDDA: --';
             hadHardwareRun = ~app.Demo && (app.Running || ~isempty(app.Pending));
             app.releaseTransport();
             if ~isempty(app.UpdateTimer) && isvalid(app.UpdateTimer)
@@ -498,6 +506,9 @@ classdef ModularICTestApp < handle
             if ~isvalid(app) || app.Closing || ~app.Connected
                 return;
             end
+            if ~isempty(app.SupplyClock) && toc(app.SupplyClock) > 3
+                app.UI.Supply.Text = 'MCU VDDA: unavailable';
+            end
             if ~isempty(app.Pending) && toc(app.Pending.Clock) > 3
                 app.disconnect();
                 app.showError('Command acknowledgement timed out. Connection closed; check hardware state before reconnecting.');
@@ -577,6 +588,17 @@ classdef ModularICTestApp < handle
         end
 
         function handleStatus(app, text)
+            if startsWith(text, 'VDDA_MV,')
+                value = str2double(text(9:end));
+                if isreal(value) && isfinite(value) && value >= 1620 && value <= 3600
+                    app.UI.Supply.Text = sprintf('MCU VDDA: %.3f V', value / 1000);
+                    app.SupplyClock = tic;
+                else
+                    app.UI.Supply.Text = 'MCU VDDA: unavailable';
+                    app.SupplyClock = [];
+                end
+                return;
+            end
             app.log(['RX ' text]);
             if strcmp(text, 'SOURCE,SIMULATED')
                 app.DeviceSource = 'simulated';

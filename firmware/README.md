@@ -34,6 +34,22 @@ At the default baud rate, supported monitor rates are **10–84 Hz**. The GUI al
 
 ## UART and MCU configuration
 
+### MCU supply monitor
+
+The current source also measures internal VREFINT with ADC1 and uses the
+factory calibration to estimate the MCU analog supply (VDDA, assuming VREF+
+is connected to VDDA as on the board's normal supply configuration). It averages
+16 conversions and sends `STATUS,VDDA_MV,<millivolts>` approximately once per
+second, including while idle. Failed readings send `STATUS,VDDA_MV,UNAVAILABLE`.
+No external ADC wiring is needed. This is an estimate of the analog supply,
+not an independent measurement of every digital VDD pin.
+
+The updated MATLAB app displays this separately as **MCU VDDA** in its header.
+It clears the value on disconnect and marks it unavailable after three seconds
+without an update. Existing rail/current/signal plots and CSV data remain
+simulated; the separate supply reading is not included in the capture CSV.
+The prebuilt images have not been updated; build/upload the current source.
+
 | Item | Setting |
 | --- | --- |
 | MCU | STM32G474RET6, Cortex-M4F |
